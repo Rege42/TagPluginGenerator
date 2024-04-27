@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Задаем имя проекта, задание по умолчанию и корневую папку  -->
+<project name="cf2-plugin-tags" default="publish-local" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+	<description>Typical ant build-file for lib-projects</description>
+
+	<property name="module.organization" value="rtec.cf2" />
+	<property name="first.num" value="1" />
+	<property name="module.name" value="${ant.project.name}" />
+
+	<!-- кодировка для исходных файлов -->
+	<property name="encoding.file" value="UTF-8" />
+
+
+	<!-- переменные ниже универсальны для большинства проектов   -->
+	<!-- имя Папки исходников   -->
+	<property name="src.dir" value="src" />
+	<!-- имя папки скомпилированных классов   -->
+	<property name="build.dest" value="classes" />
+	<!-- имя папки lib   -->
+	<property name="retrieve.dest" value="lib" />
+	<!-- имя Папки для джавадока   -->
+	<property name="doc.dir" value="javadoc" />
+	<!-- имя Папки для релиза   -->
+	<property name="zip.dest" value="release" />
+	<!-- имя Папки публикаций   -->
+	<property name="ivy.distrib.dir" value="distrib" />
+	<!-- имя Папки публикаций   -->
+	<property name="publish.dest" value="${ivy.distrib.dir}" />
+	<!-- версия в репозитарии  -->
+	<property name="module.version.target" value="1.0" />
+	<!-- имя системного свойства   -->
+	<property environment="env" />
+	<tstamp>
+		<!-- имя и настройка переменной времени сборки   -->
+		<format property="build.time" pattern="yyyyMMddHHmm" />
+	</tstamp>
+	<!-- версия билда   -->
+	<property name="build.version" value="1.0" />
+	<!-- или имя пользователя, который собрал проект или номер сборки в хадсоне  -->
+	<property name="env.BUILD_NUMBER" value="${user.name}" />
+	<!-- номер свн коммита (если в хадсоне) или local   -->
+	<property name="env.SVN_REVISION_1" value="local" />
+	<!-- полное имя билда  -->
+	<property name="build.stamp" value="${build.version}-${env.SVN_REVISION_1}-${env.BUILD_NUMBER}-${build.time}" />
+
+	<!--  Classpath для компилирования   -->
+	<path id="project.class.path">
+		<pathelement location="${build.dest}" />
+		<fileset dir="${retrieve.dest}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<!-- удаляет временные папки  -->
+	<target name="clean" description="clean up">
+		<delete dir="${build.dest}" />
+		<delete dir="${zip.dest}" />
+		<delete dir="${doc.dir}" />
+		<delete dir="${publish.dest}" />
+		<delete dir="${retrieve.dest}" />
+
+		<delete>
+			<fileset file="./*.zip" />
+			<fileset file="./*.jar" />
+		</delete>
+	</target>
+
+	<!-- задание создает папку билд  -->
+	<target name="init" depends="clean">
+		<mkdir dir="${retrieve.dest}" />
+		<mkdir dir="${build.dest}" />
+		<mkdir dir="${publish.dest}" />
+		<mkdir dir="${publish.dest}/sources" />
+		<mkdir dir="${publish.dest}/javadocs" />
+		<mkdir dir="${publish.dest}/zips" />
+		<mkdir dir="${publish.dest}/jars" />
+		<mkdir dir="${publish.dest}/notes" />
+		<mkdir dir="${zip.dest}" />
+		<mkdir dir="${zip.dest}/lib" />
+		<tstamp prefix="build" />
+	</target>
+
+	<target name="retrieve" depends="init">
+		<ivy:resolve conf="default,props" />
+		<ivy:retrieve pattern="${retrieve.dest}/[artifact]-[revision](-[classifier]).[ext]" />
+	</target>
+
+	<target name="local-version">
+		<tstamp>
+			<format property="now" pattern="yyyyMMddHHmmss" />
+		</tstamp>
+		<property name="ivy.new.revision" value="${module.version.target}-local-${now}" />
+		<property name="module.new.revision" value="${ivy.new.revision}" />
+	</target>
+
+	<target name="check-first">
+		<ivy:buildnumber revision="${first.num}." organisation="${module.organization}" default="1.0.0" module="${module.name}" />
+		<condition property="differentFirstNum">
+			<equals arg1="${ivy.new.build.number}" arg2="0" />
+		</condition>
+	</target>
+
+	<target name="inc-first" if="differentFirstNum">
+		<property name="module.new.revision" value="${first.num}.0.0" />
+	</target>
+
+	<target name="not-inc-first" unless="differentFirstNum">
+		<ivy:buildnumber organisation="${module.organization}" default="1.0.0" module="${module.name}" />
+		<property name="module.new.revision" value="${ivy.new.revision}" />
+	</target>
+
+	<target name="version" depends="check-first,inc-first,not-inc-first">
+	</target>
+
+
+	<target name="version-release">
+		<ivy:buildnumber organisation="${module.organization}" module="${module.name}" revision="${first.num}." />
+		<property name="module.new.revision" value="${ivy.new.revision}.0">
+		</property>
+	</target>
+
+	<target name="define-names" depends="retrieve">
+		<!-- имя джарки  -->
+		<property name="jar.name" value="${ant.project.name}-${module.new.revision}" />
+		<!-- имя основной джарки проекта   -->
+		<property name="build.jar.name" value="${publish.dest}/jars/${jar.name}.jar" />
+		<!-- имя джарки исходников -->
+		<property name="source.jar.name" value="${publish.dest}/sources/${jar.name}-sources.jar" />
+		<!-- имя джарки javadoc  -->
+		<property name="javadoc.jar.name" value="${publish.dest}/javadocs/${jar.name}-javadoc.jar" />
+		<!-- имя зипки  -->
+		<property name="zip.name" value="${publish.dest}/zips/${ant.project.name}-${module.new.revision}.zip" />
+		<!-- имя проперти  -->
+		<property name="properties.name" value="${ant.project.name}-${module.new.revision}.properties" />
+		<!-- имя releaseNotes  -->
+		<property name="note.name" value="ReleaseNotes-${module.new.revision}.txt" />
+	</target>
+
+
+	<!-- компилирует исходники и тесты  -->
+	<target name="compile" depends="define-names">
+		<javac destdir="${build.dest}" debug="on" includeantruntime="true" encoding="${encoding.file}">
+			<src path="${src.dir}" />
+			<classpath refid="project.class.path" />
+		</javac>
+		<copy todir="${build.dest}">
+			<fileset dir="${src.dir}" excludes="**/*.java **/package.html" />
+		</copy>
+	</target>
+
+	<!-- Создание билда проекта   -->
+	<target name="build" depends="compile">
+
+		<jar destfile="${build.jar.name}" basedir="${build.dest}" compress="true">
+			<manifest>
+				<section name="version">
+					<attribute name="build-timestamp" value="${build.time}" />
+					<attribute name="build-user" value="${user.name}" />
+					<attribute name="build-id" value="${build.version}" />
+					<attribute name="build-revision" value="${env.SVN_REVISION_1}" />
+					<attribute name="artifact-revision" value="${module.new.revision}" />
+				</section>
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- создает jar с исходниками  -->
+	<target name="sources" depends="build">
+		<jar destfile="${source.jar.name}" basedir="${src.dir}" compress="true">
+			<manifest>
+				<section name="version">
+					<attribute name="build-timestamp" value="${build.time}" />
+					<attribute name="build-user" value="${user.name}" />
+					<attribute name="build-id" value="${build.version}" />
+					<attribute name="build-revision" value="${env.SVN_REVISION_1}" />
+					<attribute name="artifact-revision" value="${module.new.revision}" />
+				</section>
+			</manifest>
+		</jar>
+	</target>
+
+	<!-- создает jar с джавадоком  -->
+	<target name="javadoc" depends="sources">
+		<mkdir dir="${doc.dir}" />
+
+		<javadoc sourcepath="${src.dir}" author="true" version="true" access="private" destdir="${doc.dir}" classpathref="project.class.path" encoding="utf8" docencoding="utf8" charset="utf8" />
+		<jar destfile="${javadoc.jar.name}" basedir="${doc.dir}" compress="true" includes="**/*">
+			<manifest>
+				<section name="version">
+					<attribute name="build-timestamp" value="${build.time}" />
+					<attribute name="build-user" value="${user.name}" />
+					<attribute name="build-id" value="${build.version}" />
+					<attribute name="build-revision" value="${env.SVN_REVISION_1}" />
+					<attribute name="artifact-revision" value="${module.new.revision}" />
+				</section>
+			</manifest>
+		</jar>
+	</target>
+
+
+	<!-- создает релиз программы (папки и zip архив) куда входят все jar текущего проекта, 
+		засисимые jar из папки lib, файлы properties    -->
+	<target name="zip" depends="javadoc">
+
+		<!-- копируем в релиз все джарки сборки-->
+		<copy toDir="${zip.dest}" flatten="true">
+			<fileset dir="${publish.dest}" includes="*/*.jar" />
+		</copy>
+
+		<!-- копируем в папку lib релиза джарки и dll зависимостей -->
+		<copy toDir="${zip.dest}/lib" flatten="true">
+			<fileset dir=".">
+				<include name="${retrieve.dest}/*.jar" />
+				<include name="${retrieve.dest}/*.dll" />
+			</fileset>
+		</copy>
+
+		<copy file="ReleaseNotes.txt" tofile="${publish.dest}/notes/${note.name}" encoding="utf8" />
+
+		<copy file="ReleaseNotes.txt" tofile="${zip.dest}/${note.name}" encoding="utf8" />
+		<zip destfile="${zip.name}" basedir="./${zip.dest}" />
+	</target>
+
+	<target name="publish-local" depends="local-version,zip">
+		<ivy:deliver status="integration" pubrevision="${module.new.revision}" />
+		<ivy:publish overwrite="false" status="integration" resolver="local" revision="${module.new.revision}" />
+	</target>
+
+	<target name="publish-shared-tmp" depends="version,zip">
+		<ivy:resolve />
+		<ivy:deliver status="integration" pubrevision="${module.new.revision}" />
+		<ivy:publish overwrite="true" revision="${module.new.revision}" resolver="libsTmp" />
+	</target>
+
+	<target name="publish-shared-release" depends="version-release,javadoc">
+		<ivy:deliver status="release" pubrevision="${module.new.revision}" />
+		<ivy:publish overwrite="true" revision="${module.new.revision}" resolver="libsRelease" />
+	</target>
+
+</project>

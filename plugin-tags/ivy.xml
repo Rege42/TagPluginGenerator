@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ivy-module version="2.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:m="http://ant.apache.org/ivy/maven"
+	xsi:noNamespaceSchemaLocation="http://ant.apache.org/ivy/schemas/ivy.xsd">
+	<info organisation="rtec.cf2" module="cf2-plugin-tags" />
+
+	<configurations>
+		<conf name="default" visibility="public"
+			description="включает runtime-зависимости и основную jar из конфигурации master"
+			extends="runtime,master" />
+		<conf name="master" visibility="public"
+			description="включает в себя jar модуля без зависимостей" />
+		<conf name="compile" visibility="public"
+			description="конфигурация по умолчанию. Включает все библиотеки необходимые для компиляции (javac -classpath)" />
+		<conf name="runtime" visibility="public"
+			description="конфигурация описывает библиотеки времени выполнения."
+			extends="compile" />
+		<conf name="test" visibility="private"
+			description="библиотеки, не нужные для обычного использования, только для тестов"
+			extends="runtime" />
+		<conf name="sources" visibility="public"
+			description="артефакты с исходным кодом модуля, если таковые имеются" />
+		<conf name="javadoc" visibility="public"
+			description="артефакты с явадоком модуля, если таковые имеются" />
+		<conf name="zip" visibility="public" description="zip сборки проекта" />
+		<conf name="props" visibility="public" description="свойства проекта (.properties)" />
+		<conf name="note" visibility="public" description="releaseNote проекта" />
+	</configurations>
+
+	<publications>
+		<artifact ext="jar" type="jar" conf="master" />
+		<artifact ext="jar" type="javadoc" m:classifier="javadoc" conf="javadoc" />
+		<artifact ext="jar" type="source" m:classifier="sources" conf="sources" />
+		<artifact ext="txt" type="note" conf="note" name="ReleaseNotes" />
+		<artifact ext="zip" type="zip" conf="zip" />
+	</publications>
+
+	<dependencies defaultconfmapping="compile->compile(*),master(*); runtime->runtime(*),master(*); test->runtime(*),master(*); props->props(*)">
+       <dependency org="rtec.commons" name="g4-utils" rev="1.3"/>
+       <dependency org="rtec.commons" name="gui-basic" rev="1.1"/>
+       <dependency org="rtec.cf2" name="cf2-platform" rev="latest.integration"/>
+       <dependency org="rtec.cf2" name="cf2-plugin-model-objects" rev="latest.integration"/>
+       <dependency org="org.hibernate" name="hibernate" rev="3.0.5" conf="*->default"/>
+	</dependencies>
+
+</ivy-module> 

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ivysettings>
+	<settings defaultResolver="default" />
+	<credentials host="artifactory.rtec.ru" realm="Artifactory Realm" username="p.gura" passwd="m+7xw!M$" />
+		
+	<resolvers>
+		<url name="libsTmp" m2compatible="true" >
+			<artifact pattern="http://artifactory.rtec.ru/libs-tmp/[organization]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+			<ivy pattern="http://artifactory.rtec.ru/libs-tmp/[organization]/[module]/[revision]/ivy-[revision].xml" />
+		</url>		
+		<url name="libsRelease" m2compatible="true">
+			<artifact pattern="http://artifactory.rtec.ru/libs-release-local/[organization]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+			<ivy pattern="http://artifactory.rtec.ru/libs-release-local/[organization]/[module]/[revision]/ivy-[revision].xml" />
+		</url>
+		<url name="componentTmp" m2compatible="true">
+			<artifact pattern="http://artifactory.rtec.ru/_components-tmp/[organization]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+			<ivy pattern="http://artifactory.rtec.ru/_components-tmp/[organization]/[module]/[revision]/ivy-[revision].xml" />
+		</url>	
+		<url name="component" m2compatible="true">
+			<artifact pattern="http://artifactory.rtec.ru/_components-local/[organization]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+			<ivy pattern="http://artifactory.rtec.ru/_components-local/[organization]/[module]/[revision]/ivy-[revision].xml" />
+		</url>	
+		<url name="product" m2compatible="true">
+			<artifact pattern="http://artifactory.rtec.ru/_product-local/[organization]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]" />
+			<ivy pattern="http://artifactory.rtec.ru/_product-local/[organization]/[module]/[revision]/ivy-[revision].xml" />
+		</url>
+		<ibiblio name="public" m2compatible="true" root="http://artifactory.rtec.ru/remote-repos" />
+		<chain name="shared">
+			<resolver ref="libsTmp"/>
+			<resolver ref="libsRelease"/>
+			<resolver ref="componentTmp"/>
+			<resolver ref="component"/>
+			<resolver ref="product"/> 
+			<resolver ref="public"/>
+		</chain>
+	</resolvers>
+
+	<include url="${ivy.default.settings.dir}/ivysettings-local.xml" />
+	<include url="${ivy.default.settings.dir}/ivysettings-main-chain.xml" />
+	<include url="${ivy.default.settings.dir}/ivysettings-default-chain.xml" /> 
+	<modules>
+		<module organisation="org.*" name="*" resolver="public"/>
+		<module organisation="ch.qos.logback" name="*" resolver="public"/>
+		<module organisation="junit" name="*" resolver="public"/>
+		<module organisation="com.*" name="*" resolver="public"/>
+		<module organisation="javax.*" name="*" resolver="public"/>
+		<module organisation="joda-time" name="*" resolver="public"/>
+	</modules>
+</ivysettings>

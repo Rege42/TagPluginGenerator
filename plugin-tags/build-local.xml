@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="build-local" default="publish-local" basedir="." xmlns:ivy="antlib:org.apache.ivy.ant">
+	<import file="build.xml"/>
+	<ivy:settings file="C:\Users\Pavel\IdeaProjects\TagPluginGenerator\ivysettings.xml"/>
+</project>
